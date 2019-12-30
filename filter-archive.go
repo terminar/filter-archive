@@ -62,13 +62,13 @@ var reporters = map[string]func(*session, []string){
 	"tx-begin":        txBegin,
 	"tx-mail":         txMail,
 	"tx-rcpt":         txRcpt,
+	"tx-data":         txData,
 	"tx-rollback":	   txRollback,
 	"tx-envelope":	   txEnvelope,
 	"timeout":         sessionTimeout,
 }
 
 var filters = map[string]func(*session, []string){
-	"data": data,
 	"data-line": dataLine,
 }
 
@@ -199,23 +199,16 @@ func txRollback(s *session, params []string) {
 	s.tx.archive.Meta("STATE=REJECTED")
 }
 
-func data(s *session, params []string) {
+func txData(s *session, params []string) {
 	if len(params) != 2 {
 		log.Fatal("invalid input, shouldn't happen")
 	}
 
-	token := params[0]
+	s.tx.archive.Meta("RESULT=" + params[1])
 
 	if len(s.tx.rcptTo) > 0 {
 		s.tx.archive.Meta("TO=" + strings.Join(s.tx.rcptTo[:], ","))
 	}
-
-	if version < "0.5" {
-		fmt.Printf("filter-result|%s|%s|proceed\n", token, s.id)
-	} else {
-		fmt.Printf("filter-result|%s|%s|proceed\n", s.id, token)
-	}
-
 }
 
 func dataLine(s *session, params []string) {
